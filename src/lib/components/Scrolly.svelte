@@ -10,6 +10,8 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
   import { browser } from '$app/environment';
+  import { base } from '$app/paths';
+
 
 
   // Preferred: build step provides this
@@ -41,9 +43,17 @@
   function normalizeStaticPath(raw: string) {
     const s = raw.trim();
     if (!s) return s;
-    if (s.startsWith('/')) return s;
-    return '/' + s;
+
+    // If it's already an absolute URL (https://...), leave it alone
+    if (/^https?:\/\//i.test(s)) return s;
+
+    // Ensure it starts with a single "/"
+    const path = s.startsWith('/') ? s : '/' + s;
+
+    // Prefix SvelteKit base path (e.g., "/multimedia-template-2026")
+    return `${base}${path}`;
   }
+
 
   // ---- Parse JSON from bodyHtml (fallback) ----
   function stripHtmlToText(html: string) {
@@ -191,7 +201,7 @@
 {#if resolvedSteps.length}
   <section class="scrolly full-bleed" style={`--fade-ms:${fadeDurationMs}ms;`}>
     <div class="scrolly-bg" role="img" aria-label={activeAlt} style="height: 100vh; width: 100vw;">
-      <div class="bg-layer top" style={`background-image:url("${topImg}")`} aria-hidden="true"></div>
+      <div class="bg-layer top" style={`background-image:url("${encodeURI(topImg)}")`} aria-hidden="true"></div>
       <div
         class={"bg-layer bottom " + (fading ? 'show' : '')}
         style={`background-image:url("${bottomImg}")`}
