@@ -15,6 +15,7 @@
   // Optional: for local files, allow captions track served from /static
   // Example shortcode: captions="/captions/my-video.vtt" srclang="en" label="English"
   export let captions: string | undefined;
+  export let credit: string | undefined;
   export let srclang: string = 'en';
   export let label: string = 'English';
   
@@ -126,7 +127,6 @@
     if (isYouTubeHost(u.hostname)) {
       const id = extractYouTubeId(u);
       
-      console.log(id);
       if (!id) return null;
 
       const params = new URLSearchParams();

@@ -8,7 +8,7 @@ This template also uses [CSS Boostrap Framework](https://getbootstrap.com)
 
 This template also allows for additional customization for more advanced students to hard-code right in the template.
 
-# Initial Setup
+# Initial Setup (For Students)
 
 1. Click the green **Use this Template** button above.
 2. Choose **Create a new repository**
@@ -132,19 +132,19 @@ Scrolly shortcodes can only be done with block shortcodes and include the image 
     "img": "scrolly/01.jpg",
     "alt": "Aerial view of the city at dusk",
     "pos": "center",
-    "text": "First block of text…"
+    "text": "First block of text"
   },
   {
-    "img": "scrolly/02.jpg",
+    "img": "scrolly/02.mp4",
     "alt": "Close-up of hands typing",
     "pos": "start",
-    "text": "Second block of text…"
+    "text": "Second block of text"
   },
   {
    "img": "scrolly/03.jpg",
     "alt": "Portrait of the interview subject",
     "pos": "end",
-    "text": "Third block of text…"
+    "text": "Third block of text"
 }
 ]
 [[/Scrolly]]
