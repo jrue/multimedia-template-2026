@@ -8,7 +8,7 @@
     "name": "VideoEmbed",
     "attrs": {
       "src": "https://youtu.be/dQw4w9WgXcQ",
-      "caption": "Rick Atley",
+      "caption": "Rick Astley",
       "autoplay": "false",
       "controls": "true",
       "size": "fit",
