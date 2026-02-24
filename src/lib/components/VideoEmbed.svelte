@@ -17,6 +17,13 @@
   export let captions: string | undefined;
   export let srclang: string = 'en';
   export let label: string = 'English';
+  
+  // if they use credit, degrade gracefully to caption
+  $: effectiveCaption = caption ?? (credit ? `credit: ${credit}` : undefined);
+
+  // degrade gracefully if they use non-standard sizes
+  const allowedSizes = new Set(['full', 'large', 'fit']);
+  $: normalizedSize = allowedSizes.has(String(size)) ? (size as any) : 'large';
 
   function toBool(v: boolean | string | undefined, fallback: boolean) {
     if (typeof v === 'boolean') return v;
@@ -118,6 +125,8 @@
 
     if (isYouTubeHost(u.hostname)) {
       const id = extractYouTubeId(u);
+      
+      console.log(id);
       if (!id) return null;
 
       const params = new URLSearchParams();
@@ -176,7 +185,7 @@
 </script>
 
 {#if resolved}
-  {#if size === 'full'}
+  {#if normalizedSize === 'full'}
     <figure class="my-3 full-bleed">
       <div class="ratio ratio-16x9">
         {#if resolved.kind === 'file'}
@@ -209,7 +218,7 @@
       {/if}
     </figure>
 
-  {:else if size === 'large'}
+  {:else if normalizedSize === 'large'}
     <figure class="my-3 full-bleed">
       <div class="container-fluid">
         <div class="row justify-content-center">
@@ -248,7 +257,7 @@
       {/if}
     </figure>
 
-  {:else if size === 'fit'}
+  {:else if normalizedSize === 'fit'}
     <figure class="my-3">
       <div class="ratio ratio-16x9">
         {#if resolved.kind === 'file'}
