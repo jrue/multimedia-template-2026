@@ -1,7 +1,6 @@
-// svelte.config.js
 import adapter from '@sveltejs/adapter-static';
-import 'dotenv/config';
 
+/** @type {import('@sveltejs/kit').Config} */
 const dev = process.env.NODE_ENV !== 'production';
 
 function normalizeBasePath(v) {
