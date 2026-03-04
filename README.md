@@ -180,7 +180,7 @@ All of the images used in a scrolly shortcode should be placed in the `static/sc
 
 This component lets you embed charts created on [Datawrapper](https://www.datawrapper.de/). Once the chart is published, under "Share & Embed", look at the "Embed code" section. Make sure the "Embed with script" option is selected. A piece of html starting with "div" appears. Check out the "id" tag,that looks like:  `id="datawrapper-vis-cY0Bb"`. Copy/paste that last string of letters after `datawrapper-vis-` (do not include the dash beforehand). This is the `id` attribute. 
 
-![A screenshot showing where to click to get to the datawrapper id needed as an attribute in the datawrapper shortcode. Under Embed Code, Embed with script radio button selected, copy/paste the last string of letters after datawrapper-vis-](https://github.com/user-attachments/assets/e72b45a4-5282-492a-8b12-a7017ad2c77b)
+<img alt="A screenshot showing where to click to get to the datawrapper id needed as an attribute in the datawrapper shortcode. Under Embed Code, Embed with script radio button selected, copy/paste the last string of letters after datawrapper-vis-" src="https://github.com/user-attachments/assets/e72b45a4-5282-492a-8b12-a7017ad2c77b" style="max-width:500px;border:1px solid black;filter: drop-shadow(5px 5px 10px #ccc);">
 
 
 ```plaintext
@@ -188,6 +188,25 @@ This component lets you embed charts created on [Datawrapper](https://www.datawr
 id="idOfChart"
 ]]
 ```
+
+### EmbedCode
+
+This is a generic EmbedCode component. Simply wrap your generic embed code inside the opening and closing shortcode:
+
+```
+[[EmbedCode size="large"]]
+   <iframe src="https://example.com/"></iframe>
+   <p>Other random HTML code</p>
+[[/EmbedCode]]
+```
+
+There are three size options"
+
+* full - fullscreen
+* large - large size, breaks out of text content
+* fit - sits within content
+
+
 
 # Developing Custom Components and Shortcodes
 
