@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import '../../static/fonts/fonts.css';
+
+@theme {
+	--font-heading: 'Roboto Slab', 'Lato', serif;
+	--font-body: 'Lato', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-display: 'Crimson Text', 'Roboto Slab', Garamond, 'Times New Roman', serif;
+	--font-mono: 'Fira Mono', monospace;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--font-heading);
+	font-weight: 500;
+	margin-bottom: 0.5em;
+}
+
+/* Break out of centered container to full viewport width */
+.full-bleed {
+	width: 100vw;
+	position: relative;
+	left: 50%;
+	right: 50%;
+	margin-left: -50vw;
+	margin-right: -50vw;
+}

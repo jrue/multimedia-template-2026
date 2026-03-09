@@ -212,7 +212,7 @@ You will see where the Google Doc content is injected.
 ```html
 <div class="container">
 	<div class="row justify-content-center">
-		<div class="col-12 col-sm-10 col-lg-8 col-xxl-6">
+		<div class="col-sm-10 col-lg-8 col-xxl-6 col-12">
 			<DocRenderer {blocks} />
 		</div>
 	</div>

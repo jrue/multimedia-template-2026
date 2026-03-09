@@ -1,293 +1,284 @@
-<!-- src/lib/components/VideoEmbed.svelte -->
 <script lang="ts">
-  export let src: string | undefined;
+	export let src: string | undefined;
 
-  export let title: string = '';
-  export let size: 'full' | 'large' | 'fit' = 'large';
-  export let caption: string | undefined;
+	export let title: string = '';
+	export let size: 'full' | 'large' | 'fit' = 'large';
+	export let caption: string | undefined;
 
-  // These arrive as strings from shortcodes; allow booleans too.
-  export let autoplay: boolean | string | undefined = false;
-  export let controls: boolean | string | undefined = true;
-  export let playsinline: boolean | string | undefined = true;
-  export let mute: boolean | string | undefined = false;
+	// These arrive as strings from shortcodes; allow booleans too.
+	export let autoplay: boolean | string | undefined = false;
+	export let controls: boolean | string | undefined = true;
+	export let playsinline: boolean | string | undefined = true;
+	export let mute: boolean | string | undefined = false;
 
-  // Optional: for local files, allow captions track served from /static
-  // Example shortcode: captions="/captions/my-video.vtt" srclang="en" label="English"
-  export let captions: string | undefined;
-  export let credit: string | undefined;
-  export let srclang: string = 'en';
-  export let label: string = 'English';
-  
-  // if they use credit, degrade gracefully to caption
-  $: effectiveCaption = caption ?? (credit ? `credit: ${credit}` : undefined);
+	// Optional: for local files, allow captions track served from /static
+	// Example shortcode: captions="/captions/my-video.vtt" srclang="en" label="English"
+	export let captions: string | undefined;
+	export let credit: string | undefined;
+	export let srclang: string = 'en';
+	export let label: string = 'English';
 
-  // degrade gracefully if they use non-standard sizes
-  const allowedSizes = new Set(['full', 'large', 'fit']);
-  $: normalizedSize = allowedSizes.has(String(size)) ? (size as any) : 'large';
+	// if they use credit, degrade gracefully to caption
+	$: effectiveCaption = caption ?? (credit ? `credit: ${credit}` : undefined);
 
-  function toBool(v: boolean | string | undefined, fallback: boolean) {
-    if (typeof v === 'boolean') return v;
-    if (typeof v === 'string') {
-      const s = v.trim().toLowerCase();
-      if (['true', '1', 'yes', 'y', 'on'].includes(s)) return true;
-      if (['false', '0', 'no', 'n', 'off'].includes(s)) return false;
-    }
-    return fallback;
-  }
+	// degrade gracefully if they use non-standard sizes
+	const allowedSizes = new Set(['full', 'large', 'fit']);
+	$: normalizedSize = allowedSizes.has(String(size)) ? (size as 'full' | 'large' | 'fit') : 'large';
 
-  function safeUrl(raw: string): URL | null {
-    try {
-      return new URL(raw);
-    } catch {
-      return null;
-    }
-  }
+	function toBool(v: boolean | string | undefined, fallback: boolean) {
+		if (typeof v === 'boolean') return v;
+		if (typeof v === 'string') {
+			const s = v.trim().toLowerCase();
+			if (['true', '1', 'yes', 'y', 'on'].includes(s)) return true;
+			if (['false', '0', 'no', 'n', 'off'].includes(s)) return false;
+		}
+		return fallback;
+	}
 
-  function isYouTubeHost(host: string) {
-    return host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be';
-  }
+	function safeUrl(raw: string): URL | null {
+		try {
+			return new URL(raw);
+		} catch {
+			return null;
+		}
+	}
 
-  function isVimeoHost(host: string) {
-    return host === 'vimeo.com' || host.endsWith('.vimeo.com') || host === 'player.vimeo.com';
-  }
+	function isYouTubeHost(host: string) {
+		return host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be';
+	}
 
-  function extractYouTubeId(u: URL): string | null {
-    if (u.hostname === 'youtu.be') {
-      const id = u.pathname.split('/').filter(Boolean)[0];
-      return id || null;
-    }
+	function isVimeoHost(host: string) {
+		return host === 'vimeo.com' || host.endsWith('.vimeo.com') || host === 'player.vimeo.com';
+	}
 
-    if (u.pathname === '/watch') {
-      return u.searchParams.get('v');
-    }
+	function extractYouTubeId(u: URL): string | null {
+		if (u.hostname === 'youtu.be') {
+			const id = u.pathname.split('/').filter(Boolean)[0];
+			return id || null;
+		}
 
-    const embedMatch = u.pathname.match(/^\/embed\/([^/]+)/);
-    if (embedMatch) return embedMatch[1];
+		if (u.pathname === '/watch') {
+			return u.searchParams.get('v');
+		}
 
-    const shortsMatch = u.pathname.match(/^\/shorts\/([^/]+)/);
-    if (shortsMatch) return shortsMatch[1];
+		const embedMatch = u.pathname.match(/^\/embed\/([^/]+)/);
+		if (embedMatch) return embedMatch[1];
 
-    const liveMatch = u.pathname.match(/^\/live\/([^/]+)/);
-    if (liveMatch) return liveMatch[1];
+		const shortsMatch = u.pathname.match(/^\/shorts\/([^/]+)/);
+		if (shortsMatch) return shortsMatch[1];
 
-    return null;
-  }
+		const liveMatch = u.pathname.match(/^\/live\/([^/]+)/);
+		if (liveMatch) return liveMatch[1];
 
-  function extractVimeoId(u: URL): string | null {
-    const playerMatch = u.pathname.match(/^\/video\/(\d+)/);
-    if (playerMatch) return playerMatch[1];
+		return null;
+	}
 
-    const simpleMatch = u.pathname.match(/^\/(\d+)/);
-    if (simpleMatch) return simpleMatch[1];
+	function extractVimeoId(u: URL): string | null {
+		const playerMatch = u.pathname.match(/^\/video\/(\d+)/);
+		if (playerMatch) return playerMatch[1];
 
-    const anyIdMatch = u.pathname.match(/\/(\d+)(?:$|\/)/);
-    return anyIdMatch ? anyIdMatch[1] : null;
-  }
+		const simpleMatch = u.pathname.match(/^\/(\d+)/);
+		if (simpleMatch) return simpleMatch[1];
 
-  function isDirectVideoFile(raw: string) {
-    return /\.(mp4|webm)(\?.*)?$/i.test(raw.trim());
-  }
+		const anyIdMatch = u.pathname.match(/\/(\d+)(?:$|\/)/);
+		return anyIdMatch ? anyIdMatch[1] : null;
+	}
 
-  function normalizeStaticPath(raw: string) {
-    // If it's already absolute http(s), keep it.
-    const s = raw.trim();
-    if (/^https?:\/\//i.test(s)) return s;
+	function isDirectVideoFile(raw: string) {
+		return /\.(mp4|webm)(\?.*)?$/i.test(raw.trim());
+	}
 
-    // Otherwise assume in /static (served at /...)
-    if (s.startsWith('/')) return s;
-    return '/' + s;
-  }
+	function normalizeStaticPath(raw: string) {
+		// If it's already absolute http(s), keep it.
+		const s = raw.trim();
+		if (/^https?:\/\//i.test(s)) return s;
 
-  type Resolved =
-    | { kind: 'youtube'; embedUrl: string }
-    | { kind: 'vimeo'; embedUrl: string }
-    | { kind: 'file'; fileUrl: string; mime: 'video/mp4' | 'video/webm' };
+		// Otherwise assume in /static (served at /...)
+		if (s.startsWith('/')) return s;
+		return '/' + s;
+	}
 
-  function resolveVideo(rawSrc: string): Resolved | null {
-    const s = rawSrc.trim();
-    if (!s) return null;
+	type Resolved =
+		| { kind: 'youtube'; embedUrl: string }
+		| { kind: 'vimeo'; embedUrl: string }
+		| { kind: 'file'; fileUrl: string; mime: 'video/mp4' | 'video/webm' };
 
-    // Direct file
-    if (isDirectVideoFile(s)) {
-      const fileUrl = normalizeStaticPath(s);
-      const mime = /\.webm(\?.*)?$/i.test(s) ? 'video/webm' : 'video/mp4';
-      return { kind: 'file', fileUrl, mime };
-    }
+	function resolveVideo(rawSrc: string): Resolved | null {
+		const s = rawSrc.trim();
+		if (!s) return null;
 
-    // YouTube / Vimeo (absolute URLs)
-    const u = safeUrl(s);
-    if (!u) return null;
+		// Direct file
+		if (isDirectVideoFile(s)) {
+			const fileUrl = normalizeStaticPath(s);
+			const mime = /\.webm(\?.*)?$/i.test(s) ? 'video/webm' : 'video/mp4';
+			return { kind: 'file', fileUrl, mime };
+		}
 
-    const autoplayBool = toBool(autoplay, false);
-    const controlsBool = toBool(controls, true);
-    const playsinlineBool = toBool(playsinline, true);
-    const muteBool = toBool(mute, false);
+		// YouTube / Vimeo (absolute URLs)
+		const u = safeUrl(s);
+		if (!u) return null;
 
-    if (isYouTubeHost(u.hostname)) {
-      const id = extractYouTubeId(u);
-      
-      if (!id) return null;
+		const autoplayBool = toBool(autoplay, false);
+		const controlsBool = toBool(controls, true);
+		const playsinlineBool = toBool(playsinline, true);
+		const muteBool = toBool(mute, false);
 
-      const params = new URLSearchParams();
-      if (autoplayBool) params.set('autoplay', '1');
-      params.set('controls', controlsBool ? '1' : '0');
-      if (playsinlineBool) params.set('playsinline', '1');
-      params.set('rel', '0');
+		if (isYouTubeHost(u.hostname)) {
+			const id = extractYouTubeId(u);
 
-      // YouTube: autoplay often requires muted
-      if (muteBool) params.set('mute', '1');
+			if (!id) return null;
 
-      const qs = params.toString();
-      const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}${
-        qs ? `?${qs}` : ''
-      }`;
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const params = new URLSearchParams();
+			if (autoplayBool) params.set('autoplay', '1');
+			params.set('controls', controlsBool ? '1' : '0');
+			if (playsinlineBool) params.set('playsinline', '1');
+			params.set('rel', '0');
 
-      return { kind: 'youtube', embedUrl };
-    }
+			// YouTube: autoplay often requires muted
+			if (muteBool) params.set('mute', '1');
 
-    if (isVimeoHost(u.hostname)) {
-      const id = extractVimeoId(u);
-      if (!id) return null;
+			const qs = params.toString();
+			const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}${
+				qs ? `?${qs}` : ''
+			}`;
 
-      const params = new URLSearchParams();
-      if (autoplayBool) params.set('autoplay', '1');
-      if (!controlsBool) params.set('controls', '0');
-      if (playsinlineBool) params.set('playsinline', '1');
+			return { kind: 'youtube', embedUrl };
+		}
 
-      // Vimeo: autoplay often requires muted
-      if (muteBool) params.set('muted', '1');
+		if (isVimeoHost(u.hostname)) {
+			const id = extractVimeoId(u);
+			if (!id) return null;
 
-      const qs = params.toString();
-      const embedUrl = `https://player.vimeo.com/video/${encodeURIComponent(id)}${
-        qs ? `?${qs}` : ''
-      }`;
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const params = new URLSearchParams();
+			if (autoplayBool) params.set('autoplay', '1');
+			if (!controlsBool) params.set('controls', '0');
+			if (playsinlineBool) params.set('playsinline', '1');
 
-      return { kind: 'vimeo', embedUrl };
-    }
+			// Vimeo: autoplay often requires muted
+			if (muteBool) params.set('muted', '1');
 
-    return null;
-  }
+			const qs = params.toString();
+			const embedUrl = `https://player.vimeo.com/video/${encodeURIComponent(id)}${
+				qs ? `?${qs}` : ''
+			}`;
 
-  $: resolved = src ? resolveVideo(src) : null;
+			return { kind: 'vimeo', embedUrl };
+		}
 
-  // Normalize captions path if present (assume /static)
-  $: captionsSrc = captions ? normalizeStaticPath(captions) : undefined;
+		return null;
+	}
 
-  // Layout helpers
-  $: wrapClass = 'float-md-start me-md-3 mb-3';
-  const wrapStyle = 'max-width: 420px;';
+	$: resolved = src ? resolveVideo(src) : null;
 
-  $: autoplayBool = toBool(autoplay, false);
-  $: controlsBool = toBool(controls, true);
-  $: playsinlineBool = toBool(playsinline, true);
-  $: muteBool = toBool(mute, false);
+	// Normalize captions path if present (assume /static)
+	$: captionsSrc = captions ? normalizeStaticPath(captions) : undefined;
+
+	// Layout helpers
+	const wrapClass = 'md:float-left md:mr-4 mb-4';
+	const wrapStyle = 'max-width: 420px;';
+
+	$: autoplayBool = toBool(autoplay, false);
+	$: controlsBool = toBool(controls, true);
+	$: playsinlineBool = toBool(playsinline, true);
+	$: muteBool = toBool(mute, false);
 </script>
 
 {#if resolved}
-  {#if normalizedSize === 'full'}
-    <figure class="my-3 full-bleed">
-      <div class="ratio ratio-16x9">
-        {#if resolved.kind === 'file'}
-          <!-- svelte-ignore a11y_media_has_caption -->
-          <video
-            src={resolved.fileUrl}
-            title={title}
-            class="w-100 h-100"
-            autoplay={autoplayBool}
-            controls={controlsBool}
-            muted={muteBool}
-            playsinline={playsinlineBool}
-          >
-            {#if captionsSrc}
-              <track kind="captions" src={captionsSrc} srclang={srclang} label={label} default />
-            {/if}
-          </video>
-        {:else}
-          <iframe
-            src={resolved.embedUrl}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        {/if}
-      </div>
+	{#if normalizedSize === 'full'}
+		<figure class="full-bleed my-4">
+			{#if resolved.kind === 'file'}
+				<video
+					src={resolved.fileUrl}
+					{title}
+					class="aspect-video w-full"
+					autoplay={autoplayBool}
+					controls={controlsBool}
+					muted={muteBool}
+					playsinline={playsinlineBool}
+				>
+					{#if captionsSrc}
+						<track kind="captions" src={captionsSrc} {srclang} {label} default />
+					{/if}
+				</video>
+			{:else}
+				<iframe
+					src={resolved.embedUrl}
+					{title}
+					class="aspect-video w-full"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			{/if}
 
-      {#if caption}
-        <figcaption class="mt-2 text-muted small">{caption}</figcaption>
-      {/if}
-    </figure>
+			{#if caption}
+				<figcaption class="mt-2 text-sm text-gray-500">{caption}</figcaption>
+			{/if}
+		</figure>
+	{:else if normalizedSize === 'large'}
+		<figure class="full-bleed my-4">
+			<div class="flex justify-center">
+				<div class="w-full lg:w-5/6 2xl:w-2/3">
+					{#if resolved.kind === 'file'}
+						<video
+							src={resolved.fileUrl}
+							{title}
+							class="aspect-video w-full"
+							autoplay={autoplayBool}
+							controls={controlsBool}
+							muted={muteBool}
+							playsinline={playsinlineBool}
+						>
+							{#if captionsSrc}
+								<track kind="captions" src={captionsSrc} {srclang} {label} default />
+							{/if}
+						</video>
+					{:else}
+						<iframe
+							src={resolved.embedUrl}
+							{title}
+							class="aspect-video w-full"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+							allowfullscreen
+						></iframe>
+					{/if}
+				</div>
+			</div>
 
-  {:else if normalizedSize === 'large'}
-    <figure class="my-3 full-bleed">
-      <div class="container-fluid">
-        <div class="row justify-content-center">
-          <div class="col-12 col-lg-10 col-xxl-8">
-            <div class="ratio ratio-16x9">
-              {#if resolved.kind === 'file'}
-                <!-- svelte-ignore a11y_media_has_caption -->
-                <video
-                  src={resolved.fileUrl}
-                  title={title}
-                  class="w-100 h-100"
-                  autoplay={autoplayBool}
-                  controls={controlsBool}
-                  muted={muteBool}
-                  playsinline={playsinlineBool}
-                >
-                  {#if captionsSrc}
-                    <track kind="captions" src={captionsSrc} srclang={srclang} label={label} default />
-                  {/if}
-                </video>
-              {:else}
-                <iframe
-                  src={resolved.embedUrl}
-                  title={title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
-              {/if}
-            </div>
-          </div>
-        </div>
-      </div>
+			{#if caption}
+				<figcaption class="mt-2 text-center text-sm text-gray-500">{caption}</figcaption>
+			{/if}
+		</figure>
+	{:else if normalizedSize === 'fit'}
+		<figure class="my-4">
+			{#if resolved.kind === 'file'}
+				<video
+					src={resolved.fileUrl}
+					{title}
+					class="aspect-video w-full"
+					autoplay={autoplayBool}
+					controls={controlsBool}
+					muted={muteBool}
+					playsinline={playsinlineBool}
+				>
+					{#if captionsSrc}
+						<track kind="captions" src={captionsSrc} {srclang} {label} default />
+					{/if}
+				</video>
+			{:else}
+				<iframe
+					src={resolved.embedUrl}
+					{title}
+					class="aspect-video w-full"
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+					allowfullscreen
+				></iframe>
+			{/if}
 
-      {#if caption}
-        <figcaption class="mt-2 text-muted small text-center">{caption}</figcaption>
-      {/if}
-    </figure>
-
-  {:else if normalizedSize === 'fit'}
-    <figure class="my-3">
-      <div class="ratio ratio-16x9">
-        {#if resolved.kind === 'file'}
-          <!-- svelte-ignore a11y_media_has_caption -->
-          <video
-            src={resolved.fileUrl}
-            title={title}
-            class="w-100 h-100"
-            autoplay={autoplayBool}
-            controls={controlsBool}
-            muted={muteBool}
-            playsinline={playsinlineBool}
-          >
-            {#if captionsSrc}
-              <track kind="captions" src={captionsSrc} srclang={srclang} label={label} default />
-            {/if}
-          </video>
-        {:else}
-          <iframe
-            src={resolved.embedUrl}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        {/if}
-      </div>
-
-      {#if caption}
-        <figcaption class="mt-2 text-muted small text-center">{caption}</figcaption>
-      {/if}
-    </figure>
-  {/if}
+			{#if caption}
+				<figcaption class="mt-2 text-center text-sm text-gray-500">{caption}</figcaption>
+			{/if}
+		</figure>
+	{/if}
 {/if}

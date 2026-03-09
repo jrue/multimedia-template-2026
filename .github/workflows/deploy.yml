@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: true
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Build
         env:
-          BASE_PATH: "/${{ github.event.repository.name }}"
+          BASE_PATH: '/${{ github.event.repository.name }}'
           NODE_ENV: production
         run: npm run build
 
