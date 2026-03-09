@@ -470,7 +470,7 @@
 						></div>
 					{:else}
 						<video
-							class="media video"
+							class="media video not-prose"
 							bind:this={topVideoEl}
 							src={topMedia.url}
 							muted

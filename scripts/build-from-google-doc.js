@@ -189,6 +189,51 @@ function splitHtmlIntoBlocksWithPairedShortcodes(html) {
 }
 
 /**
+ * Sometime return bodyHtml if it happens to be an opening anc closing shortcode.
+ * - Returns it as one if the attrs
+ */
+function hoistBodyHtmlIntoAttrs(block) {
+	if (block.type !== 'shortcode') return block;
+	if (!block.bodyHtml || !block.bodyHtml.trim()) return { ...block, bodyHtml: undefined };
+
+	// Don't override if author explicitly provided bodyHtml="..." in the shortcode attrs
+	if (block.attrs && block.attrs.bodyHtml !== undefined) {
+		return { ...block, bodyHtml: undefined };
+	}
+
+	const nextAttrs = { 
+		...(block.attrs || {}), 
+		bodyHtml: block.bodyHtml,
+		bodyText: stripHtmlToText(block.bodyHtml)
+	};
+
+	// return as a shortcode block with bodyHtml removed (now stored in attrs)
+	return { type: 'shortcode', name: block.name, attrs: nextAttrs };
+}
+
+function fixParagraphCrossBlockBoundaries(blocks) {
+  const out = blocks.map((b) => ({ ...b }));
+
+  for (let i = 0; i < out.length - 1; i++) {
+    const a = out[i];
+    const b = out[i + 1];
+
+    if (a.type !== "html" || b.type !== "html") continue;
+
+    // If block A ends with an opening <p> and block B starts with </p>, remove both.
+    const aEndsWithOpenP = /<p>\s*$/i.test(a.html);
+    const bStartsWithCloseP = /^\s*<\/p>/i.test(b.html);
+
+    if (aEndsWithOpenP && bStartsWithCloseP) {
+      a.html = a.html.replace(/<p>\s*$/i, "").trim();
+      b.html = b.html.replace(/^\s*<\/p>\s*/i, "").trim();
+    }
+  }
+
+  return out;
+}
+
+/**
  * Compilation transform for paired ImageEmbed:
  * - If block is ImageEmbed and has bodyHtml, extract first <img> from bodyHtml.
  * - Fill attrs.src / attrs.alt if missing.
@@ -277,7 +322,58 @@ function compilePairedScrolly(block) {
 }
 
 function compileBlocks(blocks) {
-	return blocks.map((b) => compilePairedScrolly(compilePairedImageEmbed(b)));
+	return blocks.map((b) => hoistBodyHtmlIntoAttrs(compilePairedScrolly(compilePairedImageEmbed(b))));
+}
+
+// prevent SSR hydration issues of the page repating over and over
+function normalizeHtmlFragment(s) {
+  return String(s || '')
+    .replace(/^\s*<\/p>\s*/i, '')  // drop leading </p>
+    .replace(/\s*<p>\s*$/i, '')    // drop trailing <p>
+    .trim();
+}
+
+
+//fix dangling </p> tags from blocks
+function fixDanglingParagraphsAcrossBlocks(blocks) {
+  const out = blocks.map((b) => ({ ...b }));
+
+  const prevHtmlIndex = (i) => {
+    for (let j = i - 1; j >= 0; j--) if (out[j].type === 'html') return j;
+    return -1;
+  };
+
+  const nextHtmlIndex = (i) => {
+    for (let j = i + 1; j < out.length; j++) if (out[j].type === 'html') return j;
+    return -1;
+  };
+
+  const endsWithOpenP = (s) => /<p>\s*$/i.test(String(s || ''));
+  const startsWithCloseP = (s) => /^\s*<\/p>\s*/i.test(String(s || ''));
+
+  // Fix boundaries that cross over shortcodes
+  for (let i = 0; i < out.length; i++) {
+    if (out[i].type !== 'shortcode') continue;
+
+    const left = prevHtmlIndex(i);
+    const right = nextHtmlIndex(i);
+    if (left === -1 || right === -1) continue;
+
+    const a = out[left];
+    const b = out[right];
+
+    if (endsWithOpenP(a.html) && startsWithCloseP(b.html)) {
+      a.html = normalizeHtmlFragment(String(a.html).replace(/<p>\s*$/i, ''));
+      b.html = normalizeHtmlFragment(String(b.html).replace(/^\s*<\/p>\s*/i, ''));
+    }
+  }
+
+  // Also normalize all html blocks individually (nice cleanup)
+  for (let i = 0; i < out.length; i++) {
+    if (out[i].type === 'html') out[i].html = normalizeHtmlFragment(out[i].html);
+  }
+
+  return out;
 }
 
 /**
@@ -522,6 +618,10 @@ async function main() {
 	// 2) compile transforms (ImageEmbed paired -> attrs.src/alt)
 	const compiled = compileBlocks(tokenized);
 
+	// 3) fix trailing </p> issues to prevent SSR hydration mismatches
+	const fixed = fixDanglingParagraphsAcrossBlocks(compiled);
+
+
 	// Debug: show shortcode blocks
 	// console.log('\n--- First 8 shortcode blocks (debug) ---\n');
 	// console.log(
@@ -542,7 +642,7 @@ async function main() {
 	await fs.mkdir(outDir, { recursive: true });
 
 	await fs.writeFile(`${outDir}/doc.cleaned.html`, cleanedHtml, 'utf8');
-	await fs.writeFile(`${outDir}/doc.blocks.json`, JSON.stringify(compiled, null, 2), 'utf8');
+	await fs.writeFile(`${outDir}/doc.blocks.json`, JSON.stringify(fixed, null, 2), 'utf8');
 
 	console.log(
 		`\n\n\x1b[32mSUCCESS!\x1b[0m Parsed Google Doc contents to ${outDir}/doc.blocks.json\n`

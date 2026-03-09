@@ -5,7 +5,6 @@
 				type: 'shortcode';
 				name: string;
 				attrs: Record<string, unknown>;
-				bodyHtml?: string;
 		  };
 </script>
 
