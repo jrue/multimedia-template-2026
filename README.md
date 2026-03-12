@@ -291,10 +291,12 @@ Import content from Google Docs.
 npm run build:extract-google-doc
 ```
 
-To publish your project, simply commit and sync with Github. A Github Actions script will take care of the rest. To activate the page (only do this once) visit Github.com, go into your Repo's settings, click Pages and make sure to activate the Pages feature by setting the Source to GitHub Actions. Once you do that, your site should be live at:
+To publish your project, simply commit and sync with Github. A Github Actions script will take care of the rest. To activate the page (only do this once) visit Github.com, go into your Repo's settings, click Pages and make sure to activate the Pages feature by setting the Source to GitHub Actions (you do not need to select what kind of Github Action). Once you do that, your site should be live at:
 
 ```plaintext
 https://<username>.github.io/<repo-name>/
 ```
 
-Google take 1-2 minutes to build the site after activating the Pages feature.
+Google take 1-2 minutes to build the site after activating the Pages feature. 
+
+Please note that your website will not build retroactively: if you made the changes in the repo's "settings" after having pushed to Github, you will need to push again to trigger the build and deployment.
