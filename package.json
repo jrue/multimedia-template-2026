@@ -7,7 +7,7 @@
 		"setup": "bash scripts/setup.sh",
 		"dev": "vite dev",
 		"dev:open": "vite dev --open",
-		"build:extract-google-doc": "node --env-file=.env scripts/build-from-google-doc.js",
+		"gdoc": "node --env-file=.env scripts/build-from-google-doc.js",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
