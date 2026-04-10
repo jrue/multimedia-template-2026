@@ -100,7 +100,7 @@ echo ""
 
 # ── Step 6: Extract Google Doc ───────────────────────────────────────────────
 echo -e "${BOLD}[6/6] Pulling content from your Google Doc...${NC}"
-npm run build:extract-google-doc
+npm run gdoc
 echo ""
 
 # ── Done ─────────────────────────────────────────────────────────────────────
